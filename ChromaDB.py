@@ -7,7 +7,8 @@ import numpy as np
 
 from utils.singleton import SingletonMeta
 
-from chromadb import Documents, EmbeddingFunction, Embeddings
+from chromadb import Documents, EmbeddingFunction, Embeddings, Collection
+from chromadb.api import ClientAPI
 
 from google import genai
 from google.genai import types
@@ -40,10 +41,10 @@ class ChromaDB():
         #     chroma_server_host=host
         # ))
 
-        self.client = chromadb.HttpClient(host='localhost', port=8000)
+        self.client: ClientAPI = chromadb.HttpClient(host='localhost', port=8000)
         # Tworzymy kolekcję do przechowywania facts
 
-        self.collection = self.client.get_or_create_collection(
+        self.collection: Collection = self.client.get_or_create_collection(
             name=collection_name,
             # embedding_function=GeminiEmbeddingFunction()
         )

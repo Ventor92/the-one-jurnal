@@ -27,6 +27,14 @@ class GameFact(BaseModel):
             "tagi": json.dumps(self.tagi) if self.tagi else None,
             "powiązania": json.dumps(self.powiązania) if self.powiązania else None,
         }
+    
+    def toContext(self) -> str:
+        """Zwraca kontekst jako czytelny tekst."""
+        contexts: str = f"{self.nazwa} to {self.typ.capitalize()}. Opis: {self.opis}. (Data: {self.data_w_grze}, Sesja: {self.sesja})"
+        links: str = ", ".join(self.powiązania) if self.powiązania else "Brak powiązań"
+        tags: str = ", ".join(self.tagi) if self.tagi else "Brak tagów"
+        contexts += f"\nPowiązania: {links}\nTagi: {tags}"
+        return contexts
 
     @classmethod
     def from_metadata(cls, metadata: Mapping) -> "GameFact":
