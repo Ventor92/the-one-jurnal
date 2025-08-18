@@ -7,10 +7,9 @@ services:
   chromadb:
     image: ghcr.io/chroma-core/chroma:latest
     volumes:
-      - ./chromadb:/chroma/chroma
+      - ./chromadb:/data
     environment:
       - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma/chroma # this is the default path, change it as needed
       - ANONYMIZED_TELEMETRY=${ANONYMIZED_TELEMETRY:-TRUE}
     ports:
       - 8000:8000
