@@ -92,7 +92,7 @@ def add_fact_to_db(entry: Mapping):
     # emb_response = genai.embed_content(model=MODEL_EMBEDDING, content=text_repr)
     # vector = emb_response['embedding']
 
-def save_facts_to_file(facts: List[dict], filename="facts_store.json"):
+def save_facts_to_file(facts: List[Mapping], filename="facts_store.json"):
     """
     Zapisuje wyodrębnione fakty do pliku JSON.
     """
@@ -110,6 +110,29 @@ def save_facts_to_file(facts: List[dict], filename="facts_store.json"):
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(existing_facts, f, ensure_ascii=False, indent=2)
 
+def load_facts_from_file(filename="facts_store.json") -> List[GameFact]:
+    """
+    Wczytuje fakty z pliku JSON i zwraca listę GameFact.
+    """
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            facts_data = json.load(f)
+            return [GameFact.from_metadata(fact) for fact in facts_data]
+    except FileNotFoundError:
+        print(f"Plik {filename} nie istnieje. Zwracam pustą listę.")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"Błąd dekodowania JSON: {e}")
+        return []
+    
+def add_facts_to_db_from_file(filename="facts_store.json"):
+    """
+    Wczytuje fakty z pliku JSON i dodaje je do bazy danych.
+    """
+    facts = load_facts_from_file(filename)
+    for fact in facts:
+        add_fact_to_db(fact.to_metadata())
+
 def process_transcript(fragment: str, save_file: str = "facts_store.json") -> List[GameFact]:
     """
     Główny pipeline: wyodrębnia fakty i zapisuje do pliku.
@@ -117,14 +140,17 @@ def process_transcript(fragment: str, save_file: str = "facts_store.json") -> Li
     # Wyodrębnienie faktów z transkrypcji
     facts = extract_game_facts(fragment)
 
-    # Zapis do pliku JSON
-    # save_facts_to_file(facts, save_file)
-
-    # (Opcjonalnie) dodanie do ChromaDB
     for fact in facts:
         fact.data_w_grze = "123 II Ery"
         fact.sesja = 1
-        fact_dict = fact.to_metadata()
+
+    facts_dict = [fact.to_metadata() for fact in facts]
+
+    # Zapis do pliku JSON
+    save_facts_to_file(facts_dict, save_file)
+
+    #Dodanie do ChromaDB
+    for fact_dict in facts_dict:
         add_fact_to_db(fact_dict)
 
     return facts

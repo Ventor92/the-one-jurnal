@@ -21,11 +21,11 @@ class GameFact(BaseModel):
             "typ": self.typ,
             "nazwa": self.nazwa,
             "opis": self.opis,
-            "data_w_grze": self.data_w_grze,
-            "sesja": self.sesja,
+            "data_w_grze": self.data_w_grze if self.data_w_grze else "brak informacji", 
+            "sesja": self.sesja if self.sesja else "brak informacji",
             "log": self.log,
-            "tagi": json.dumps(self.tagi) if self.tagi else None,
-            "powiązania": json.dumps(self.powiązania) if self.powiązania else None,
+            "tagi": json.dumps(self.tagi) if self.tagi else "[]",
+            "powiązania": json.dumps(self.powiązania) if self.powiązania else "[]",
         }
     
     def toContext(self) -> str:
