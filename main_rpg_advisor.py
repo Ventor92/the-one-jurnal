@@ -9,6 +9,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from pydantic import SecretStr
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from pdfSplitter_srvc import load_pdf_with_toc, sliding_window_split
 
 
 # =========================
@@ -16,11 +17,11 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 # =========================
 MODEL_EMBEDDING = "models/embedding-001"
 DEFAULT_LLM_MODEL = "gemini-2.5-flash"
-PDF_PATH = r"G:\RPG\The One Ring\Jedyny_Pierscien_Gra_Fabularna_v3.1-1.pdf"  # <- podmień w razie potrzeby
+PDF_PATH = r"../../data/Jedyny_Pierscien_Gra_Fabularna_v3.1-1.pdf"  # <- podmień w razie potrzeby
 FAISS_PATH = r"../../data/faiss_index"
 
-st.set_page_config(page_title="🧙‍♂️ TTRPG RAG (Gemini + FAISS)", layout="wide")
-st.title("🧙‍♂️ TTRPG RAG (Gemini + FAISS)")
+st.set_page_config(page_title="🧙‍♂️ Interaktywny Podręcznik ttRPG", layout="wide")
+st.title("🧙‍♂️ Interaktywny Podręcznik ttRPG")
 
 # =========================
 # Walidacja środowiska
@@ -37,7 +38,7 @@ llm_model = st.sidebar.selectbox("Model LLM", ["gemini-2.5-flash", "gemini-2.5-p
 temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.2, 0.1)
 k = st.sidebar.slider("Liczba fragmentów kontekstu (k)", 1, 10, 5, 1)
 rebuild = st.sidebar.checkbox("Wymuś przebudowę indeksu", value=False)
-show_full_chunks = st.sidebar.checkbox("Pokaż pełne fragmenty kontekstu", value=False)
+show_full_chunks = st.sidebar.checkbox("Pokaż pełne fragmenty kontekstu", value=True)
 
 # =========================
 # Lazy inicjalizacja w session_state
@@ -95,14 +96,20 @@ def ensure_vectorstore(rebuild: bool = False):
         if not os.path.exists(PDF_PATH):
             st.error(f"Nie znaleziono PDF pod ścieżką: {PDF_PATH}")
             st.stop()
-        loader = PyPDFLoader(PDF_PATH)
-        documents = loader.load()
+        
+        # 1. Wczytaj PDF i podziel po nagłówkach (TOC)
+        documents = load_pdf_with_toc(PDF_PATH)
+        # 2. Zastosuj sliding window
+        docs = sliding_window_split(documents, chunk_size=600, chunk_overlap=300)
+        
+        # loader = PyPDFLoader(PDF_PATH)
+        # documents = loader.load()
 
-        # (opcjonalnie) ograniczenie do stron testowych:
-        # documents = documents[92:105]
+        # # (opcjonalnie) ograniczenie do stron testowych:
+        # # documents = documents[92:105]
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=150)
-        docs = splitter.split_documents(documents)
+        # splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=150)
+        # docs = splitter.split_documents(documents)
 
         st.info(f"Generowanie embeddingów dla {len(docs)} fragmentów...")
         st.session_state.db = FAISS.from_documents(docs, embeddings)
@@ -129,10 +136,11 @@ def answer_query(query: str, k: int, llm_model: str, temperature: float):
     sources = []
     for d in retrieved_docs:
         meta = d.metadata or {}
-        page = meta.get("page", "—")
+        page = meta.get("pages", "—")
         src = meta.get("source", "PDF")
-        snippet = d.page_content[:200].replace("\n", " ")
-        sources.append(f"{src} (strona: {page}) — „{snippet}...”")
+        chapter = meta.get("chapter", "—")
+        snippet = d.page_content.replace("\n", " ")
+        sources.append(f"{src} {chapter} (strona: {page}) — „{snippet}”")
 
     return response, sources, elapsed
 

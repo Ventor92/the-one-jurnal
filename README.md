@@ -22,6 +22,15 @@ Aplikacja do prowadzenia dziennika, wspierająca zarządzanie notatkami, zadania
    ```
 3. Uruchom aplikację:
    Draft: by main scripts
+
+   Interactive Handbook
+   ```
+   streamlit run main_rpg_advisor.py
+   ```
+   or
+   ``` 
+   streamlit run main_rpg_advisor.py --server.address 0.0.0.0 --server.port 8501
+   ```
    <!-- ```bash
    uvicorn main:app --reload
    ``` -->
