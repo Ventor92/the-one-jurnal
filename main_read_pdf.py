@@ -111,7 +111,7 @@ if __name__ == "__main__":
     print("\n📄 Tekst pierwszej strony:")
     print(dane["strony"][0]["tekst"])
 
-    sectionName = "Potyczka"
+    sectionName = "Postawa Zapalczywa"
     print(f"📄 Tekst rozdziału '{sectionName}':")
     rozdzial = tekst_rozdzialu(pathFile, sectionName)
     for i in range(0, len(rozdzial), 1000):

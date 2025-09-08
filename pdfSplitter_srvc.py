@@ -6,7 +6,11 @@ def load_pdf_with_toc(pdf_path):
     """
     Wczytuje PDF i zwraca listę Document (LangChain) z metadata zawierającą nagłówek/rozdział.
     """
-    doc = fitz.open(pdf_path)
+    try:
+        doc = fitz.open(pdf_path)
+    except FileNotFoundError: 
+        raise FileNotFoundError(f"Plik PDF nie istnieje pod ścieżką: {pdf_path}")
+    
     documents = []
 
     # Pobierz TOC: lista [poziom, tytuł, strona]
@@ -43,9 +47,11 @@ def sliding_window_split(documents, chunk_size=500, chunk_overlap=100):
     all_chunks = []
     for doc in documents:
         chunks = splitter.split_documents([doc])
+        print(f"Podzielono rozdział '{doc.metadata.get('chapter', 'brak')}' na {len(chunks)} fragmenty.")
         # Dodaj info o rozdziale do każdego chunk
         for c in chunks:
             c.metadata["chapter"] = doc.metadata.get("chapter", "brak")
+            c.metadata["pages"] = doc.metadata.get("pages", "brak")
         all_chunks.extend(chunks)
     return all_chunks
 
